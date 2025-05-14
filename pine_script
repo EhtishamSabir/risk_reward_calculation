@@ -1,0 +1,50 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+//@version=5
+indicator("Risk Reward Ratio for SOLUSDT", overlay=true)
+
+// Input values as floats
+entry_price = 180.0
+tp_price = 186.0
+sl_price = 178.0
+position_type = "Long"
+
+// Calculate Risk and Reward
+var float risk = 0.0
+var float reward = 0.0
+var float rr_ratio = 0.0
+
+if position_type == "Long"
+    risk := entry_price - sl_price
+    reward := tp_price - entry_price
+    rr_ratio := reward / risk
+else
+    risk := sl_price - entry_price
+    reward := entry_price - tp_price
+    rr_ratio := reward / risk
+
+// Draw lines for Entry, TP, and SL
+hline(price=entry_price, title="Entry", color=color.blue, linestyle=hline.style_solid)
+hline(price=tp_price, title="Take Profit", color=color.green, linestyle=hline.style_dashed)
+hline(price=sl_price, title="Stop Loss", color=color.red, linestyle=hline.style_dashed)
+
+// Display R:R ratio as a label on the latest candle only
+if ta.crossover(bar_index, bar_index[1])
+    label.new(
+         bar_index, close,
+         text="R:R = " + str.tostring(rr_ratio, "#.##"),
+         color=color.blue,
+         style=label.style_label_down,
+         textcolor=color.white)
+
+// Create a warning label on the latest candle if R:R < 2
+if ta.crossover(bar_index, bar_index[1]) and rr_ratio < 2
+    label.new(
+         bar_index, high,
+         text="Warning: R:R < 2 (" + str.tostring(rr_ratio, "#.##") + ")",
+         color=color.red,
+         style=label.style_label_down,
+         textcolor=color.white, 
+         yloc=yloc.abovebar)
+
+// Plot R:R ratio in the data window for reference
+plot(rr_ratio, title="Risk:Reward Ratio", display=display.data_window)
